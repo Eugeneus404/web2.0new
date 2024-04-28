@@ -152,6 +152,9 @@
                 Комментарии
             </div>
             <div style="width: 50%">
+                {% if not user.is_authenticated %}
+                <p style="color: #FF6347; margin-bottom: 20px;font-size: 16px">Комментарии могут оставлять только зарегистрированные пользователи.</p>
+                {% else %}
                 <div style="margin-bottom: 20px;">
                     <form method="post">
                         {% csrf_token %}
@@ -159,6 +162,7 @@
                         <button type="submit" style="padding: 8px 16px; background-color: #75b061; color: white; border: none; border-radius: 5px; cursor: pointer;">Отправить</button>
                     </form>
                 </div>
+                {% endif %}
                 {% if comments %}
                 <div class="orders-block" style="display: flex; flex-direction:column; width: 100%; margin-bottom: 20px; gap: 15px;">
                     {% for comment in comments %}
@@ -176,7 +180,7 @@
                             </div>
                             {% endif %}
                         </div>
-   
+
                         <div style="font-size: 16px; color: #6e6e6e; text-align: justify">
                             {{comment.comment}}
                         </div>
