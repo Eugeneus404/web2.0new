@@ -1,0 +1,236 @@
+﻿{% extends "app/layout.html" %}
+{% load static %}
+{% block content %}
+
+<div class="main_page_grid_container">
+    <div class="categories-container">
+        <div class="main_cat_cont">
+            {% for category in categories %}
+            <a style="text-decoration: none" href="{{ "/catalog/" | add:category.path }}">
+                <div class="category" onmouseover="showChildren(this)" onmouseleave="hideChildren(this)">
+                    <div class="category-name">{{ category.name | upper }}</div>
+                    <div class="subcategories">
+                        {% for child in category.children %}
+                        <div class="subcategory">
+                            <a style="text-decoration: none" href="{{ "/catalog/" | add:child.path }}"><div class="subcategory-name">{{ child.name }}</div></a>
+                            <div class="sub-subcategories">
+                                {% for grandchild in child.children %}
+                                <a style="text-decoration: none; color: #6e6e6e;" href="{{ "/catalog/" | add:grandchild.path }}">
+                                    <div class="sub-subcategory">{{ "• " | add:grandchild.name }}</div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </a>
+            {% if not forloop.last %}
+            <div style="height: 1px; width: calc(100% - 60px); background: white; margin: 0px 30px;"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="header_poster" style="position: relative; border-radius: 20px; overflow: hidden;">
+        <video autoplay loop muted style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px">
+            <source src="/media/video1.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <span class="header_poster_text" style="position: absolute; z-index: 1; color: #fff; font-size: 36px; font-weight: 600; text-align: left;">
+            Освежите свой дом новой энергией и стилем с нашей эксклюзивной коллекцией мебели!
+        </span>
+    </div>
+</div>
+<div style="margin: 40px 0">
+    <div style="font-size: 24px; color: #75b061; font-weight: 600; margin-bottom: 30px;">
+        Популярные товары
+    </div>
+    <div class="product-container">
+        {% for product in products %}
+        <div class="product-card">
+            <div class="product-details">
+                <a style="text-decoration: none;" href="/products/{{ product.id }}">
+                    <div class="product-image" style="min-height: 200px; height: 200px; overflow: hidden;">
+                        {% if product.images %}
+                        {% if product.images|length > 1 %}
+                        <div id="carouselExample{{ product.id }}" class="carousel slide" data-ride="carousel" style="height: 200px;">
+                            <div class="carousel-inner" style="height: 200px;">
+                                {% for image in product.images %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ image.path.url }}" class="d-block w-100" alt="Изображение товара" style="height: 200px; object-fit: cover; border-radius: 20px;">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <a class="carousel-control-prev" href="#carouselExample{{ product.id }}" role="button" data-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                            <a class="carousel-control-next" href="#carouselExample{{ product.id }}" role="button" data-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </div>
+                        {% else %}
+                        <img src="{{ product.images.0.path.url }}" alt="Изображение товара" style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px;">
+                        {% endif %}
+                        {% else %}
+                        <img src="{% static 'app/content/nophoto.jpg' %}" alt="Нет фото" style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px;">
+                        {% endif %}
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin: 8px 0">
+                        <div style="display: flex; align-items: center">
+                            <b style="color: #f2d026; font-size: 16px">{{ product.fullGrade }}</b>
+                            <img src="../../static/app/content/star.svg" alt="star" style="width: 20px; margin-left: 5px">
+                        </div>
+                        <div style="display: flex; align-items: center">
+                            <b style="color: #6e6e6e; font-size: 16px">{{ product.totalReviews }}</b>
+                            <img src="../../static/app/content/review.svg" alt="star" style="width: 20px; margin-left: 5px">
+                        </div>
+                    </div>
+                    <div class="product-card-title">{{ product.name }}</div>
+                    <p class="product-card-description">{{ product.description }}</p>
+                    {% if product.remain == 0 %}
+                    <div class="product-card-price" style="color: #6E6E6E; opacity: 0.8;">{{ product.price|stringformat:"0.0f"}} ₽</div>
+                    <div class="product-card-availability">
+                        <div style="width: 100%; text-align: center; font-size: 16px">Нет в наличии</div>
+                    </div>
+                    {% else %}
+                    <div class="product-card-price" style="color: #75b061">{{ product.price|stringformat:"0.0f"}} ₽</div>
+                    {% endif %}
+                </a>
+                {% if product.remain > 0 %}
+                <div class="add-to-cart-form add-to-cart-form-{{ product.id }}">
+                    <div>
+                        <div style="color: #6e6e6e; font-size: 16px">В наличии: {{ product.remain }}</div>
+                        <input type="number" id="count_input_{{ product.id }}" class="quantity-input" value="1" min="1" max="{{ product.remain }}">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart('{{ product.id }}', '{{ product.name }}', '{{ product.price }}')">
+                        <img src="{% static 'app/content/cart.svg' %}" alt="Нет фото" style="width: 30px; object-fit: cover; border-radius: 20px;" />
+                    </button>
+                </div>
+                <div style="width: 100%; text-align: center; display: none; font-size: 16px;" class="in_cart-{{ product.id }}">
+                    В корзине
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+<div class="container-info">
+    <div class="text-info">
+        <div style="font-size: 24px; color: #75b061; font-weight: 600; margin-bottom: 30px;">
+            Рады видеть вас в "Мебельном магнате"!
+        </div>
+        <p style="color: #6e6e6e">
+            В "Мебельном магнате" мы стремимся сделать ваш дом идеальным местом для отдыха, работы и встреч с близкими. Наш магазин предлагает широкий ассортимент мебели для всех помещений вашего дома - от спальни до гостиной, от кухни до ванной комнаты. Мы гордимся тем, что можем удовлетворить самые изысканные вкусы и предпочтения наших клиентов.
+        </p>
+        <p style="color: #6e6e6e">
+            Наши коллекции мебели созданы с любовью к деталям, с учетом последних тенденций дизайна и функциональности. Мы сотрудничаем только с лучшими производителями, чтобы предложить вам высококачественную мебель по доступным ценам.
+        </p>
+        <p style="color: #6e6e6e">
+            Независимо от того, ищете ли вы современный минимализм, классический шик или эклектичный дизайн, в "Мебельном магнате" вы найдете все необходимое для создания интерьера вашей мечты. Наши дизайнеры и консультанты с удовольствием помогут вам подобрать идеальные элементы для вашего дома, чтобы каждая комната стала отражением вашего стиля и индивидуальности.
+        </p>
+        <p style="color: #6e6e6e">
+            Мы также гордимся своим отличным обслуживанием клиентов. Наша команда профессионалов всегда готова ответить на ваши вопросы, помочь с выбором мебели и обеспечить вас удобством при покупке. В "Мебельном магнате" мы стремимся сделать ваше покупательное испытание приятным и удовлетворительным.
+        </p>
+        <p style="color: #6e6e6e">
+            Не откладывайте обновление вашего дома на потом. Посетите "Мебельный магнат" сегодня и откройте для себя мир красивой и функциональной мебели, который превратит ваш дом в настоящий оазис комфорта и стиля.
+        </p>
+    </div>
+    <div class="image-info">
+        <img src="../../static/app/content/logo.png" alt="Мебельный магнат">
+    </div>
+</div>
+<div class="video-cont-parent" style="position: relative; border-radius: 20px; overflow: hidden;">
+    <div class="video-cont">
+        <div style="width: 50%; display: flex; gap: 30px;">
+            <div class="video-text">Посмотрите на то, как наши мастера бережно изготавливают вашу мебель!</div>
+            <div class="video-image-info">
+                <img src="../../static/app/content/logo.png" alt="Мебельный магнат">
+            </div>
+        </div>
+    </div>
+    <video autoplay loop muted style="width: 100%;">
+        <source src="/media/video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+<script>
+    function showChildren(category) {
+        var subcategories = category.querySelector('.subcategories');
+        subcategories.style.display = 'grid';
+        category.style.backgroundColor = '#edeef4';
+
+        var firstChild = category.querySelector('.category-name');
+        if (firstChild) {
+            firstChild.style.color = '#75b061';
+        }
+    }
+
+    function hideChildren(category) {
+        var subcategories = category.querySelector('.subcategories');
+        subcategories.style.display = 'none';
+        category.style.backgroundColor = 'transparent';
+
+        var firstChild = category.querySelector('.category-name');
+        if (firstChild) {
+            firstChild.style.color = 'white';
+        }
+    }
+
+    function addToCart(id, name, price) {
+        var countInput = document.getElementById('count_input_' + id);
+        var quantity = countInput.value;
+
+        var cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        cartItems.push({ id: id, name: name, quantity: quantity, price: price });
+
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+
+        var itemCount = cartItems.length;
+
+        var cartIcon = document.querySelector('.cart_count');
+        if (itemCount > 0) {
+            cartIcon.style.display = 'flex';
+            cartIcon.innerText = itemCount;
+        }
+
+        cartItems.forEach(function (item) {
+            var productId = item.id;
+
+            var addToCartForm = document.querySelector('.add-to-cart-form-' + productId);
+            var inCartMessage = document.querySelector('.in_cart-' + productId);
+            if (addToCartForm && inCartMessage) {
+                addToCartForm.style.display = 'none';
+                inCartMessage.style.display = 'block';
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        var itemCount = cartItems.length;
+
+        var cartIcon = document.querySelector('.cart_count');
+        if (itemCount > 0) {
+            cartIcon.style.display = 'flex';
+            cartIcon.innerText = itemCount;
+        }
+
+        cartItems.forEach(function (item) {
+            var productId = item.id;
+
+            var addToCartForm = document.querySelector('.add-to-cart-form-' + productId);
+            var inCartMessage = document.querySelector('.in_cart-' + productId);
+            if (addToCartForm && inCartMessage) {
+                addToCartForm.style.display = 'none';
+                inCartMessage.style.display = 'block';
+            }
+        });
+    });
+</script>
+
+{% endblock %}
