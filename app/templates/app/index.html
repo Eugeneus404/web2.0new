@@ -103,7 +103,7 @@
                 <div class="add-to-cart-form add-to-cart-form-{{ product.id }}">
                     <div>
                         <div style="color: #6e6e6e; font-size: 16px">В наличии: {{ product.remain }}</div>
-                        <input type="number" id="count_input_{{ product.id }}" class="quantity-input" value="1" min="1" max="{{ product.remain }}">
+                        <input type="number" id="count_input_{{ product.id }}" class="quantity-input" value="1" min="1" max="{{ product.remain }}" onblur="validateInput('{{ product.remain }}', '{{ product.id }}')">
                     </div>
                     <button class="add-to-cart-button" onclick="addToCart('{{ product.id }}', '{{ product.name }}', '{{ product.price }}')">
                         <img src="{% static 'app/content/cart.svg' %}" alt="Нет фото" style="width: 30px; object-fit: cover; border-radius: 20px;" />
@@ -159,6 +159,15 @@
     </video>
 </div>
 <script>
+    function validateInput(maxValue, productId) {
+        const input = document.getElementById(`count_input_${productId}`);
+        let value = input.value;
+
+        if (!Number.isInteger(+value) || Number(value) < 1 || Number(value) > maxValue) {
+            input.value = 1;
+        }
+    }
+
     function showChildren(category) {
         var subcategories = category.querySelector('.subcategories');
         subcategories.style.display = 'grid';
