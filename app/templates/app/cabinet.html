@@ -48,9 +48,9 @@
     {% for order in active_orders %}
     <div style="display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #ccc; padding: 20px; border-radius: 20px">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-            <div style="width: 300px; font-weight: bold; color: #75b061">Заказ №{{ order.id }} - от {{ order.created_at }}</div>
-            <div style="width: 160px; margin-left: 20px;">Кол-во товаров: <b style="color: #75b061">{{ order.items.count }}</b></div>
-            <div style="width: 200px; margin-left: 20px;">Общая сумма: <b style="color: #75b061">{{ order.total_cost }} ₽</b></div>
+            <div style="font-size: 16px; width: 300px; font-weight: bold; color: #75b061">Заказ №{{ order.id }} - от {{ order.created_at }}</div>
+            <div style="font-size: 16px; width: 160px; margin-left: 20px;">Кол-во товаров: <b style="color: #75b061">{{ order.items.count }}</b></div>
+            <div style="font-size: 16px; width: 200px; margin-left: 20px;">Общая сумма: <b style="color: #75b061">{{ order.total_cost }} ₽</b></div>
         </div>
         <div style="display: flex; align-items: center; width: 100%; gap: 20px;">
             <div style="display: flex; width: fit-content">
@@ -60,7 +60,7 @@
                 <button class="show-items-btn show-items-btn-{{ order.id }}" onclick="deleteOrder({{ order.id }})" style="padding: 5px 10px; background-color: #e54747; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Удалить заказ</button>
             </div>
         </div>
-        <div class="order-items" id="order-items-{{ order.id }}" style="display: none; margin: 10px 0 0 20px">
+        <div class="order-items" id="order-items-{{ order.id }}" style="display: none; margin: 10px 0 0 20px; font-size: 16px;">
             <ul>
                 {% for item in order.items.all %}
                 <li>{{ item.product.name }} - {{ item.count }} шт. - {{ item.price }} ₽ за ед.</li>

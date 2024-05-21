@@ -19,7 +19,9 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from django.db import connection
 
+# ORM
 def home(request):
     """Renders the home page."""
     def build_category_tree(categories, parent_id=None, parent_path=""):
@@ -56,6 +58,7 @@ def home(request):
             product.fullGrade = 0
         product.totalReviews = total_reviews
         product.images = images
+        print(images)
     
     avatar = None
     if request.user.is_authenticated:
@@ -72,6 +75,103 @@ def home(request):
             'avatar': avatar
         }
     )
+# SQL
+# def home(request):
+#     """Renders the home page."""
+#     def build_category_tree(categories, parent_id=None, parent_path=""):
+#         category_tree = []
+#         for category in categories:
+#             if category['parent_id'] == parent_id:
+#                 path = f"{parent_path}/{category['url']}" if parent_path else category['url']
+#                 children = build_category_tree(categories, parent_id=category['id'], parent_path=path)
+#                 category_data = {
+#                     'id': category['id'],
+#                     'parent': category['parent_id'],
+#                     'name': category['name'],
+#                     'url': category['url'],
+#                     'path': path,
+#                     'children': children
+#                 }
+#                 category_tree.append(category_data)
+#         return category_tree
+
+#     with connection.cursor() as cursor:
+#         cursor.execute("SELECT id, parent_id, name, url FROM app_category")
+#         categories = dictfetchall(cursor)
+        
+#     category_tree = build_category_tree(categories)
+
+#     with connection.cursor() as cursor:
+#         cursor.execute("""
+#             SELECT * FROM app_product
+#             WHERE remain > 0
+#             ORDER BY RANDOM()
+#             LIMIT 4
+#         """)
+#         products = dictfetchall(cursor)
+    
+#     for product in products:
+#         with connection.cursor() as cursor:
+#             cursor.execute("SELECT * FROM app_review WHERE product_id = %s", [product['id']])
+#             reviews = dictfetchall(cursor)
+#             cursor.execute("SELECT * FROM app_image WHERE product_id = %s", [product['id']])
+#             images = dictfetchall(cursor)
+#             print(images)
+        
+#         total_grade = sum(review['grade'] for review in reviews)
+#         total_reviews = len(reviews)
+#         product['fullGrade'] = round(total_grade / total_reviews, 1) if total_reviews > 0 else 0
+#         product['totalReviews'] = total_reviews
+#         product_images = []
+#         for image in images:
+#             print(image)
+#             product_images.append({
+#                 'path': {
+#                     'url': 'media/' + image['path']
+#                 }
+               
+#             })
+#         product['images'] = product_images
+
+#     avatar = None
+#     if request.user.is_authenticated:
+#         with connection.cursor() as cursor:
+#             cursor.execute("SELECT * FROM app_userprofile WHERE user_id = %s", [request.user.id])
+#             avatar = dictfetchone(cursor)
+#             if avatar:
+#                 avatar = {
+#                     'avatar': {
+#                         'url': 'media/' + avatar['avatar']
+#                     }
+#                 }
+
+#     return render(
+#         request,
+#         'app/index.html',
+#         {
+#             'title': 'Главная',
+#             'year': datetime.now().year,
+#             'categories': category_tree,
+#             'products': products,
+#             'avatar': avatar
+#         }
+#     )
+
+# def dictfetchall(cursor):
+#     "Returns all rows from a cursor as a dict"
+#     desc = cursor.description
+#     return [
+#         dict(zip([col[0] for col in desc], row))
+#         for row in cursor.fetchall()
+#     ]
+
+# def dictfetchone(cursor):
+#     "Returns a single row from a cursor as a dict"
+#     row = cursor.fetchone()
+#     if row is None:
+#         return None
+#     desc = cursor.description
+#     return dict(zip([col[0] for col in desc], row))
 
 def catalog(request):
     """Renders the home page."""
@@ -775,6 +875,8 @@ def cart(request):
     }
     return render(request, 'app/cart.html', context)
 
+# ORM
+
 @login_required
 def cabinet(request):
     if request.method == 'POST' and 'password_change' in request.POST:
@@ -822,6 +924,73 @@ def cabinet(request):
     }
     return render(request, 'app/cabinet.html', context)
 
+# SQL
+
+# @login_required
+# def cabinet(request):
+#     if request.method == 'POST' and 'password_change' in request.POST:
+#         password_form = BootstrapPasswordChangeForm(request.user, request.POST)
+#         if password_form.is_valid():
+#             user = password_form.save()
+#             update_session_auth_hash(request, user)
+#             return redirect('cabinet')
+#     else:
+#         password_form = BootstrapPasswordChangeForm(request.user)
+
+#     if request.method == 'POST' and 'avatar_upload' in request.POST:  
+#         avatar_form = UserProfileForm(request.POST, request.FILES)
+#         if avatar_form.is_valid() and 'avatar_upload' in request.POST:
+#             avatar_data = avatar_form.cleaned_data['avatar']
+#             avatar_path = avatar_data.name 
+
+#             with connection.cursor() as cursor:
+#                 cursor.execute("""
+#                     SELECT id FROM app_userprofile WHERE user_id = %s
+#                 """, [request.user.id])
+#                 user_profile = cursor.fetchone()
+                
+#                 if user_profile:
+#                     cursor.execute("""
+#                         UPDATE app_userprofile SET avatar = %s WHERE user_id = %s
+#                     """, [avatar_path, request.user.id])
+#                 else:
+#                     cursor.execute("""
+#                         INSERT INTO app_userprofile (user_id, avatar)
+#                         VALUES (%s, %s)
+#                     """, [request.user.id, avatar_path])
+
+#             handle_uploaded_file(request.FILES['avatar'], avatar_path)
+#     else:
+#         avatar_form = UserProfileForm()
+
+#     active_orders = Order.objects.filter(user=request.user)
+#     user_reviews = Review.objects.filter(user=request.user)
+
+#     for order in active_orders:
+#         order.items = OrderProduct.objects.filter(order=order)
+#         order.total_cost = sum(item.price * item.count for item in order.items)
+        
+#     avatar = None
+#     if request.user.is_authenticated:
+#         avatar = UserProfile.objects.filter(user=request.user).first()
+        
+#     context = {
+#         "title": "Кабинет",
+#         "active_orders": active_orders,
+#         "form": password_form,
+#         "avatar_form": avatar_form,
+#         "avatar": avatar,
+#         "reviews": user_reviews
+#     }
+#     return render(request, 'app/cabinet.html', context)
+
+# def handle_uploaded_file(file, filename):
+#     with open(f'media/{filename}', 'wb+') as destination:
+#         for chunk in file.chunks():
+#             destination.write(chunk)
+
+# ORM
+
 def create_order(request):
     if request.method == "POST":
         if request.user.is_authenticated:
@@ -845,6 +1014,40 @@ def create_order(request):
     else:
         return JsonResponse({'error': 'Метод запроса должен быть POST.'}, status=405)
     
+#SQL
+
+# def create_order(request):
+#     if request.method == "POST":
+#         if request.user.is_authenticated:
+#             cart_items = json.loads(request.body)
+            
+#             with connection.cursor() as cursor:
+#                 cursor.execute("""
+#                     INSERT INTO app_order (user_id, created_at)
+#                     VALUES (%s, datetime('now')) RETURNING id
+#                 """, [request.user.id])
+#                 order_id = cursor.fetchone()[0]
+            
+#             for item in cart_items["cartItems"]:
+#                 product_id = item['id']
+#                 quantity = item['quantity']
+#                 price = Decimal(item['price'].replace(',', '.'))
+
+#                 with connection.cursor() as cursor:
+#                     cursor.execute("""
+#                         INSERT INTO app_orderproduct (order_id, product_id, count, price)
+#                         VALUES (%s, %s, %s, %s)
+#                     """, [order_id, product_id, quantity, price])
+
+#             request.session['cartItems'] = []
+
+#             return JsonResponse({'message': 'Заказ успешно оформлен.'}, status=201)
+#         else:
+#             return JsonResponse({'error': 'Пользователь не аутентифицирован.'}, status=401)
+#     else:
+#         return JsonResponse({'error': 'Метод запроса должен быть POST.'}, status=405)
+    
+# ORM
 @require_POST
 def delete_order(request, order_id):
     if request.user.is_authenticated:
@@ -856,6 +1059,36 @@ def delete_order(request, order_id):
             return JsonResponse({'error': 'Указанный заказ не существует или не принадлежит текущему пользователю.'}, status=404)
     else:
         return JsonResponse({'error': 'Пользователь не аутентифицирован.'}, status=401)
+    
+# SQL
+
+# @require_POST
+# def delete_order(request, order_id):
+#     if request.user.is_authenticated:
+#         try:
+#             with connection.cursor() as cursor:
+#                 cursor.execute("""
+#                     SELECT COUNT(*) FROM app_order
+#                     WHERE id = %s AND user_id = %s
+#                 """, [order_id, request.user.id])
+#                 if cursor.fetchone()[0] == 0:
+#                     return JsonResponse({'error': 'Указанный заказ не существует или не принадлежит текущему пользователю.'}, status=404)
+
+#                 cursor.execute("""
+#                     DELETE FROM app_orderproduct
+#                     WHERE order_id = %s
+#                 """, [order_id])
+
+#                 cursor.execute("""
+#                     DELETE FROM app_order
+#                     WHERE id = %s
+#                 """, [order_id])
+
+#             return JsonResponse({'message': 'Заказ успешно удален.'}, status=200)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+#     else:
+#         return JsonResponse({'error': 'Пользователь не аутентифицирован.'}, status=401)
     
 @require_POST
 def delete_comment(request, comment_id):
